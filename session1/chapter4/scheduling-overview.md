@@ -1,4 +1,4 @@
-# 4 讲调度
+# 第4章 讲调度
 任何一个复杂的系统，用户感知到的都只是冰山一角，数据库也不例外。前两篇文章介绍了 TiKV、TiDB 的基本概念以及一些核心功能的实现原理，这两个组件一个负责 KV 存储，一个负责 SQL 引擎，都是大家看得见的东西。在这两个组件的后面，还有一个叫做 PD（Placement Driver）的组件，虽然不直接和业务接触，但是这个组件是整个集群的核心，负责全局元信息的存储以及 TiKV 集群负载均衡调度。
 
 ## 4.1 调度概述
@@ -94,7 +94,7 @@ PD 收集了这些信息后，还需要一些策略来制定具体的调度计�
 * TiKV 节点分布在多个机架上，希望单个机架掉电时，也能保证系统可用性
 * TiKV 节点分布在多个 IDC 中，希望单个机房掉电时，也能保证系统可用性
 
-这些需求本质上都是某一个节点具备共同的位置属性，构成一个最小的『容错单元』，我们希望这个单元内部不会存在一个 Region 的多个 Replica。这个时候，可以给节点配置 [lables](https://github.com/tikv/tikv/blob/v4.0.0-beta/etc/config-template.toml#L140) 并且通过在 PD 上配置 [location-labels](https://github.com/pingcap/pd/blob/v4.0.0-beta/conf/config.toml#L100) 来指名哪些 lable 是位置标识，需要在 Replica 分配的时候尽量保证一个 Region 的多个 Replica 不会分布在具有相同的位置标识的节点上。
+这些需求本质上都是某一个节点具备共同的位置属性，构成一个最小的『容错单元』，我们希望这个单元内部不会存在一个 Region 的多个 Replica。这个时候，可以给节点配置 [labels](https://github.com/tikv/tikv/blob/v4.0.0-beta/etc/config-template.toml#L140) 并且通过在 PD 上配置 [location-labels](https://github.com/pingcap/pd/blob/v4.0.0-beta/conf/config.toml#L100) 来指名哪些 label 是位置标识，需要在 Replica 分配的时候尽量保证一个 Region 的多个 Replica 不会分布在具有相同的位置标识的节点上。
 
 **副本在 Store 之间的分布均匀分配**
 

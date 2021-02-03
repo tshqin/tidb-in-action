@@ -1,3 +1,37 @@
+## 6.1.3 High performance unique id generating solutions
+
+Applications usually use the unique id to identify the uniqueness of a table record. A classical solution is using Sequence which is an object of a RDBMS, to use it as the numeric part of an unique identification. TiDB started to support Sequence since v4. But in current Internet age, the applications are facing big challenges: massive data is stored everywhere, data explosion happening at anytime, the applications have to generate UIDs for a huge number of transactions concurrently. Even with the support of Sequence, a RDBMS will encounter a performce bottlenect of Sequence generating.
+
+This document will introduce 2 kinds of high performance UID generating solutions.
+
+### Solution 1: the snowflake UID generators
+Snowflake is a distributed UID generating solution introduced by Twitter, it has several kind of implementations, Baidu uid-generator and Meituan leaf are 2 of the popular implementations. In this section the Baidu uid-generator will be introduced.
+
+uid-generator generates 64 bit IDs, an ID is constituted by:
+
+![uid-generator.png](/res/session4/chapter6/serial-number/uid-generator.png)
+
+** Snowflake algorithm：** An unique id consists of worker node, timestamp and sequence within that timestamp. Usually, it is a 64 bits number(long), and the default bits of that three fields are as follows:
+
+sign(1bit)
+The highest bit is always 0.
+
+delta seconds (28 bits)
+The next 28 bits, represents delta seconds since a customer epoch(2016-05-20). The maximum time will be 8.7 years.
+
+worker id (22 bits)
+The next 22 bits, represents the worker node id, maximum value will be 4.2 million. UidGenerator uses a build-in database based worker id assigner when startup by default, and it will dispose previous work node id after reboot. Other strategy such like 'reuse' is coming soon.
+
+sequence (13 bits)
+the last 13 bits, represents sequence within the one second, maximum is 8192 per second by default.
+
+Below items are needed to pay attention when using a snowflake UID generator:
+* the delta seconds is generated in the local machine, it relies on that machine's local clock. If a turn back of the clock happens, it leads to UID duplications or even the UID generating service outage.
+* the bits of the delta seconds can be adapted by considering the data TTL, usually it's between 28 bits to 44 bits.
+* do not use the default value for the delta seconds' customer epoch, it should close to the current time.
+* the bit of a worker node id is limited, the number can not be greater than 5 million. If the auto increment column is used to generate the worker node id, every restar of the tidb-server will make the auto increment id gain 30,000 at least, in this case, only 500 /3 = 166 times of the tib-server restart leads to a fault that the generated value is large than the worker node id could store. A workaround is to truncate the table of the auto increment id of worker node id generating, rebase the value of the auto increment column's value to 0. This problem can be resolved in UID-generator either.
+
+
 ## 6.1.3 高并发的唯一序列号生成方案
 
 应用程序通常使用唯一标识符来确认一行记录。传统解决方案普遍依赖数据库的序列对象（Sequence）来生成唯一标识符中的数字部分。TiDB 4.0 正式支持序列。但是，互联网应用需要处理的数据量巨大且往往呈现爆发式增长，使得应用程序必须在短时间内为大量数据和消息生成唯一标识符。这种场景下，即使有了序列功能，数据库也可能会由于高并发的序列分配请求而出现性能瓶颈。

@@ -11,19 +11,24 @@ uid-generator generates 64 bit IDs, an ID is constituted by:
 
 ![uid-generator.png](/res/session4/chapter6/serial-number/uid-generator.png)
 
-** Snowflake algorithm：** An unique id consists of worker node, timestamp and sequence within that timestamp. Usually, it is a 64 bits number(long), and the default bits of that three fields are as follows:
+** Snowflake algorithm：** An unique id consists of worker node, timestamp and sequence within that timestamp. Usually,
+it is a 64 bits number(long), and the default bits of that three fields are as follows:
 
-sign(1bit)
-The highest bit is always 0.
+* sign(1bit)  
+  The highest bit is always 0.
 
-delta seconds (28 bits)
-The next 28 bits, represents delta seconds since a customer epoch(2016-05-20). The maximum time will be 8.7 years.
+* delta seconds (28 bits)  
+  The next 28 bits, represents delta seconds since a customer epoch(2016-05-20). The maximum time will be 8.7 years.
 
-worker id (22 bits)
-The next 22 bits, represents the worker node id, maximum value will be 4.2 million. UidGenerator uses a build-in database based worker id assigner when startup by default, and it will dispose previous work node id after reboot. Other strategy such like 'reuse' is coming soon.
+* worker id (22 bits)  
+  The next 22 bits, represents the worker node id, maximum value will be 4.2 million. UidGenerator uses a build-in
+  database based ```worker id assigner``` when startup by default, and it will dispose previous work node id after
+  reboot. Other strategy such like 'reuse' is coming soon.
 
-sequence (13 bits)
-the last 13 bits, represents sequence within the one second, maximum is 8192 per second by default.
+* sequence (13 bits)   
+  the last 13 bits, represents sequence within the one second, maximum is 8192 per second by default.
+  
+**The parameters above can be configured in spring bean**
 
 Below items are needed to pay attention when using a snowflake UID generator:
 * the delta seconds is generated in the local machine, it relies on that machine's local clock. If a turn back of the clock happens, it leads to UID duplications or even the UID generating service outage.
